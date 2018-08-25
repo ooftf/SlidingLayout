@@ -1,5 +1,7 @@
 # SlidingLayout
 [![](https://jitpack.io/v/ooftf/SlidingLayout.svg)](https://jitpack.io/#ooftf/SlidingLayout)
+## 介绍
+一个可以使控件具有关闭打开功能的layout，目前已测试支持基本View类型和RecycleView
 ## 效果图
 ![](https://github.com/ooftf/SlidingLayout/raw/master/art/demo.gif)
 # 使用方式
