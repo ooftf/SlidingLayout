@@ -1,5 +1,4 @@
 # SlidingLayout
-一个可以推拉控件
 [![](https://jitpack.io/v/ooftf/SlidingLayout.svg)](https://jitpack.io/#ooftf/SlidingLayout)
 
 # 使用方式
@@ -30,7 +29,7 @@ dependencies {
 SlidingLayout的layout_height是关闭状态时的高度
 ## SlidingLayout 方法
 |方法名|描述|
-|---|---|---|
+|---|---|
 |smoothOpen|变为打开状态  |
 |smoothClose|变为关闭状态 |
 |smoothTurn| 改变状态 |
