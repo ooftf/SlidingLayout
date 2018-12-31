@@ -1,16 +1,13 @@
 package com.ooftf.sliding;
 
+import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.graphics.Point;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
-
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.functions.Consumer;
-import io.reactivex.functions.Function;
 
 /**
  * @author ooftf
@@ -21,8 +18,7 @@ public class SlidingLayout extends FrameLayout {
     int openHeight = 0;
     int closeHeight = 0;
     int currentHeight = 0;
-    ScrollerPlus scrollerPlus;
-    CompositeDisposable disposables = new CompositeDisposable();
+    ValueAnimator animator;
     boolean isOpen = false;
 
     public SlidingLayout(Context context) {
@@ -48,21 +44,45 @@ public class SlidingLayout extends FrameLayout {
     }
 
     private void init() {
-        scrollerPlus = new ScrollerPlus(getContext());
+        animator = new ValueAnimator();
+        animator.setDuration(duration);
+        animator.setInterpolator(new ViscousFluidInterpolator());
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float value = (Float) animation.getAnimatedValue();
+                currentHeight = (int) value;
+                requestLayout();
+            }
+        });
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        // 以固定高度为默认高度
         closeHeight = MeasureSpec.getSize(heightMeasureSpec);
-        if (currentHeight == 0) {
-            currentHeight = closeHeight;
-        }
+
+        // 以无限高度默认测量子view的高度
         int boundless = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         for (int i = 0; i < getChildCount(); i++) {
             View child = getChildAt(i);
             measureChildWithMargins(child, widthMeasureSpec, 0, boundless, 0);
             openHeight = Math.max(child.getMeasuredHeight(), openHeight);
         }
+        // 如果打开状态高度小于关闭状态高度，那么将改关闭和打开设置为同一高度
+        if (openHeight < closeHeight) {
+            closeHeight = openHeight;
+        }
+        //初始状态设置为关闭状态
+        if (!animator.isRunning()) {
+            if (isOpen) {
+                currentHeight = openHeight;
+            } else {
+                currentHeight = closeHeight;
+            }
+        }
+
+        // 设置高度
         setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), currentHeight);
     }
 
@@ -70,13 +90,13 @@ public class SlidingLayout extends FrameLayout {
 
     public void smoothOpen() {
         isOpen = true;
-        startScroll(currentHeight, openHeight - currentHeight);
+        startScroll(currentHeight, openHeight);
 
     }
 
     public void smoothClose() {
         isOpen = false;
-        startScroll(currentHeight, closeHeight - currentHeight);
+        startScroll(currentHeight, closeHeight);
     }
 
     public boolean isOpen() {
@@ -91,28 +111,53 @@ public class SlidingLayout extends FrameLayout {
         }
     }
 
-    private void startScroll(int startY, int dy) {
-        disposables.add(scrollerPlus
-                .startScrollRx(0, startY, 0, dy, duration)
-                .map(new Function<Point, Integer>() {
-
-                    @Override
-                    public Integer apply(Point point) throws Exception {
-                        return point.y;
-                    }
-                })
-                .subscribe(new Consumer<Integer>() {
-                    @Override
-                    public void accept(Integer y) throws Exception {
-                        currentHeight = y;
-                        requestLayout();
-                    }
-                }));
+    private void startScroll(int startY, int endy) {
+        animator.setFloatValues(startY, endy);
+        animator.start();
     }
 
     @Override
     protected void onDetachedFromWindow() {
-        disposables.dispose();
+        animator.end();
         super.onDetachedFromWindow();
+    }
+
+    static class ViscousFluidInterpolator implements Interpolator {
+        /**
+         * Controls the viscous fluid effect (how much of it).
+         */
+        private static final float VISCOUS_FLUID_SCALE = 8.0f;
+
+        private static final float VISCOUS_FLUID_NORMALIZE;
+        private static final float VISCOUS_FLUID_OFFSET;
+
+        static {
+
+            // must be set to 1.0 (used in viscousFluid())
+            VISCOUS_FLUID_NORMALIZE = 1.0f / viscousFluid(1.0f);
+            // account for very small floating-point error
+            VISCOUS_FLUID_OFFSET = 1.0f - VISCOUS_FLUID_NORMALIZE * viscousFluid(1.0f);
+        }
+
+        private static float viscousFluid(float x) {
+            x *= VISCOUS_FLUID_SCALE;
+            if (x < 1.0f) {
+                x -= (1.0f - (float) Math.exp(-x));
+            } else {
+                float start = 0.36787944117f;   // 1/e == exp(-1)
+                x = 1.0f - (float) Math.exp(1.0f - x);
+                x = start + x * (1.0f - start);
+            }
+            return x;
+        }
+
+        @Override
+        public float getInterpolation(float input) {
+            final float interpolated = VISCOUS_FLUID_NORMALIZE * viscousFluid(input);
+            if (interpolated > 0) {
+                return interpolated + VISCOUS_FLUID_OFFSET;
+            }
+            return interpolated;
+        }
     }
 }

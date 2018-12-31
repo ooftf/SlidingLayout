@@ -1,5 +1,5 @@
 # SlidingLayout
-[![](https://jitpack.io/v/ooftf/SlidingLayout.svg)](https://jitpack.io/#ooftf/SlidingLayout)
+[ ![Download](https://api.bintray.com/packages/ooftf/maven/sliding-layout/images/download.svg) ](https://bintray.com/ooftf/maven/sliding-layout/_latestVersion)
 ## 介绍
 一个可以使控件具有关闭打开功能的layout，目前已测试支持基本View类型和RecycleView
 ## 效果图
@@ -7,14 +7,8 @@
 # 使用方式
 ## Gradle配置
 ```groovy
-allprojects {
-    repositories {
-        maven { url 'https://jitpack.io' }
-    }
-}
 dependencies {
-    implementation 'io.reactivex.rxjava2:rxandroid:2.1.0'
-    implementation 'com.github.ooftf:SlidingLayout:1.0.0'
+    implementation 'com.ooftf:sliding-layout:1.1.0'
 }
 ```
 ## xml
