@@ -64,6 +64,7 @@ public class SlidingLayout extends FrameLayout {
 
         // 以无限高度默认测量子view的高度
         int boundless = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+        openHeight = 0;
         for (int i = 0; i < getChildCount(); i++) {
             View child = getChildAt(i);
             measureChildWithMargins(child, widthMeasureSpec, 0, boundless, 0);
