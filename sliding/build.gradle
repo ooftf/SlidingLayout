@@ -30,7 +30,7 @@ publish {
     userOrg = 'ooftf'      // bintray注册的用户名
     groupId = 'com.ooftf'
     artifactId = 'sliding-layout'// bintray创建的package
-    publishVersion = '1.1.1'
+    publishVersion = '1.1.2'
     desc = 'nothing'
     bintrayUser = 'ooftf'
     bintrayKey = bintray_key

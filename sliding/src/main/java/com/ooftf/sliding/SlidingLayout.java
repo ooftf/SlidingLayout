@@ -1,8 +1,10 @@
 package com.ooftf.sliding;
 
+import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.View;
@@ -29,18 +31,30 @@ public class SlidingLayout extends FrameLayout {
 
     public SlidingLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
+        obtainAttrs(attrs);
         init();
     }
 
+
     public SlidingLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        obtainAttrs(attrs);
         init();
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public SlidingLayout(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
+        obtainAttrs(attrs);
         init();
+    }
+
+    boolean isShelterMode = true;
+
+    private void obtainAttrs(AttributeSet attrs) {
+        TypedArray typedArray = getContext().obtainStyledAttributes(attrs, R.styleable.SlidingLayout);
+        isShelterMode = typedArray.getBoolean(R.styleable.SlidingLayout_isShelterMode, true);
+        typedArray.recycle();
     }
 
     private void init() {
@@ -64,11 +78,18 @@ public class SlidingLayout extends FrameLayout {
 
         // 以无限高度默认测量子view的高度
         int boundless = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+        int realHeight = 0;
+        if (!isShelterMode) {
+            realHeight = MeasureSpec.makeMeasureSpec(currentHeight, MeasureSpec.EXACTLY);
+        }
         openHeight = 0;
         for (int i = 0; i < getChildCount(); i++) {
             View child = getChildAt(i);
             measureChildWithMargins(child, widthMeasureSpec, 0, boundless, 0);
             openHeight = Math.max(child.getMeasuredHeight(), openHeight);
+            if (!isShelterMode) {
+                measureChildWithMargins(child, widthMeasureSpec, 0, realHeight, 0);
+            }
         }
         // 如果打开状态高度小于关闭状态高度，那么将改关闭和打开设置为同一高度
         if (openHeight < closeHeight) {
@@ -87,11 +108,27 @@ public class SlidingLayout extends FrameLayout {
         setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), currentHeight);
     }
 
+    int getOpenHeight() {
+        openHeight = 0;
+        int height = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+        int width = MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY);
+        for (int i = 0; i < getChildCount(); i++) {
+            View child = getChildAt(i);
+            measureChildWithMargins(child, width, 0, height, 0);
+            openHeight = Math.max(child.getMeasuredHeight(), openHeight);
+        }
+        return openHeight;
+    }
+
+    public void setAnimatorChanageListener(Animator.AnimatorListener listener) {
+        animator.addListener(listener);
+    }
+
     int duration = 600;
 
     public void smoothOpen() {
         isOpen = true;
-        startScroll(currentHeight, openHeight);
+        startScroll(currentHeight, getOpenHeight());
 
     }
 
@@ -112,18 +149,22 @@ public class SlidingLayout extends FrameLayout {
         }
     }
 
-    private void startScroll(int startY, int endy) {
-        animator.setFloatValues(startY, endy);
+    private void startScroll(int startY, int endY) {
+        animator.setFloatValues(startY, endY);
         animator.start();
     }
 
     @Override
     protected void onDetachedFromWindow() {
-        animator.end();
+        animator.cancel();
         super.onDetachedFromWindow();
     }
 
-    static class ViscousFluidInterpolator implements Interpolator {
+
+    /**
+     * 从Scroller中偷来的插值器
+     */
+    public static class ViscousFluidInterpolator implements Interpolator {
         /**
          * Controls the viscous fluid effect (how much of it).
          */
@@ -145,7 +186,7 @@ public class SlidingLayout extends FrameLayout {
             if (x < 1.0f) {
                 x -= (1.0f - (float) Math.exp(-x));
             } else {
-                float start = 0.36787944117f;   // 1/e == exp(-1)
+                float start = 0.36787944117f;
                 x = 1.0f - (float) Math.exp(1.0f - x);
                 x = start + x * (1.0f - start);
             }
