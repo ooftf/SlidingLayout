@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="SlidingLayout">
-        <attr name="isShelterMode" format="boolean" />
+        <attr name="sl_isShelterMode" format="boolean" />
+        <attr name="sl_closeHeight" format="dimension" />
     </declare-styleable>
 </resources>

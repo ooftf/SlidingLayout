@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
@@ -17,9 +18,9 @@ import android.widget.FrameLayout;
  * @desc
  **/
 public class SlidingLayout extends FrameLayout {
-    int openHeight = 0;
-    int closeHeight = 0;
-    int currentHeight = 0;
+    float openHeight = 0;
+    float closeHeight = 0;
+    float currentHeight = 0;
     ValueAnimator animator;
     boolean isOpen = false;
 
@@ -53,7 +54,8 @@ public class SlidingLayout extends FrameLayout {
 
     private void obtainAttrs(AttributeSet attrs) {
         TypedArray typedArray = getContext().obtainStyledAttributes(attrs, R.styleable.SlidingLayout);
-        isShelterMode = typedArray.getBoolean(R.styleable.SlidingLayout_isShelterMode, true);
+        isShelterMode = typedArray.getBoolean(R.styleable.SlidingLayout_sl_isShelterMode, true);
+        closeHeight = typedArray.getDimension(R.styleable.SlidingLayout_sl_closeHeight,0);
         typedArray.recycle();
     }
 
@@ -73,14 +75,11 @@ public class SlidingLayout extends FrameLayout {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        // 以固定高度为默认高度
-        closeHeight = MeasureSpec.getSize(heightMeasureSpec);
-
         // 以无限高度默认测量子view的高度
         int boundless = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         int realHeight = 0;
         if (!isShelterMode) {
-            realHeight = MeasureSpec.makeMeasureSpec(currentHeight, MeasureSpec.EXACTLY);
+            realHeight = MeasureSpec.makeMeasureSpec((int) currentHeight, MeasureSpec.EXACTLY);
         }
         openHeight = 0;
         for (int i = 0; i < getChildCount(); i++) {
@@ -93,7 +92,7 @@ public class SlidingLayout extends FrameLayout {
         }
         // 如果打开状态高度小于关闭状态高度，那么将改关闭和打开设置为同一高度
         if (openHeight < closeHeight) {
-            closeHeight = openHeight;
+            openHeight = closeHeight;
         }
         //初始状态设置为关闭状态
         if (!animator.isRunning()) {
@@ -103,12 +102,12 @@ public class SlidingLayout extends FrameLayout {
                 currentHeight = closeHeight;
             }
         }
-
+        Log.e("currentHeight",""+currentHeight);
         // 设置高度
-        setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), currentHeight);
+        setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), (int) currentHeight);
     }
 
-    int getOpenHeight() {
+    float getOpenHeight() {
         openHeight = 0;
         int height = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         int width = MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY);
@@ -120,7 +119,7 @@ public class SlidingLayout extends FrameLayout {
         return openHeight;
     }
 
-    public void setAnimatorChanageListener(Animator.AnimatorListener listener) {
+    public void setAnimatorChangeListener(Animator.AnimatorListener listener) {
         animator.addListener(listener);
     }
 
@@ -134,6 +133,7 @@ public class SlidingLayout extends FrameLayout {
 
     public void smoothClose() {
         isOpen = false;
+        Log.e("currentHeight",currentHeight+"::"+closeHeight);
         startScroll(currentHeight, closeHeight);
     }
 
@@ -149,7 +149,7 @@ public class SlidingLayout extends FrameLayout {
         }
     }
 
-    private void startScroll(int startY, int endY) {
+    private void startScroll(float startY, float endY) {
         animator.setFloatValues(startY, endY);
         animator.start();
     }

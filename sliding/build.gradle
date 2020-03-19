@@ -1,13 +1,10 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.novoda.bintray-release'
 android {
-    compileSdkVersion 28
-
-
-
+    compileSdkVersion 29
     defaultConfig {
-        minSdkVersion 11
-        targetSdkVersion 28
+        minSdkVersion 14
+        targetSdkVersion 29
         versionCode 1
         versionName "1.0"
 
@@ -30,7 +27,7 @@ publish {
     userOrg = 'ooftf'      // bintray注册的用户名
     groupId = 'com.ooftf'
     artifactId = 'sliding-layout'// bintray创建的package
-    publishVersion = '1.1.2'
+    publishVersion = '1.1.4'
     desc = 'nothing'
     bintrayUser = 'ooftf'
     bintrayKey = bintray_key
