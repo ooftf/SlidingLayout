@@ -55,8 +55,17 @@ public class SlidingLayout extends FrameLayout {
     private void obtainAttrs(AttributeSet attrs) {
         TypedArray typedArray = getContext().obtainStyledAttributes(attrs, R.styleable.SlidingLayout);
         isShelterMode = typedArray.getBoolean(R.styleable.SlidingLayout_sl_isShelterMode, true);
-        closeHeight = typedArray.getDimension(R.styleable.SlidingLayout_sl_closeHeight,0);
+        closeHeight = typedArray.getDimension(R.styleable.SlidingLayout_sl_closeHeight, 0);
         typedArray.recycle();
+    }
+
+    private float getCloseHeight() {
+        // 如果打开状态高度小于关闭状态高度，那么将改关闭和打开设置为同一高度
+        float openHeight = getOpenHeight();
+        if (closeHeight > openHeight) {
+            return openHeight;
+        }
+        return closeHeight;
     }
 
     private void init() {
@@ -71,6 +80,8 @@ public class SlidingLayout extends FrameLayout {
                 requestLayout();
             }
         });
+
+       // post(OnMe)
     }
 
     @Override
@@ -91,21 +102,25 @@ public class SlidingLayout extends FrameLayout {
             }
         }
         // 如果打开状态高度小于关闭状态高度，那么将改关闭和打开设置为同一高度
-        if (openHeight < closeHeight) {
-            openHeight = closeHeight;
-        }
+
         //初始状态设置为关闭状态
         if (!animator.isRunning()) {
             if (isOpen) {
                 currentHeight = openHeight;
             } else {
-                currentHeight = closeHeight;
+                currentHeight = getCloseHeight();
             }
         }
-        Log.e("currentHeight",""+currentHeight);
+        Log.e("currentHeight", "" + currentHeight);
         // 设置高度
         setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), (int) currentHeight);
     }
+
+   /* @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        Log.e("onLayout", left + "," + top + "," + right + "," + getOpenHeight());
+        super.onLayout(changed, left, top, right, bottom);
+    }*/
 
     float getOpenHeight() {
         openHeight = 0;
@@ -133,8 +148,8 @@ public class SlidingLayout extends FrameLayout {
 
     public void smoothClose() {
         isOpen = false;
-        Log.e("currentHeight",currentHeight+"::"+closeHeight);
-        startScroll(currentHeight, closeHeight);
+        Log.e("currentHeight", currentHeight + "::" + closeHeight);
+        startScroll(currentHeight, getCloseHeight());
     }
 
     public boolean isOpen() {
