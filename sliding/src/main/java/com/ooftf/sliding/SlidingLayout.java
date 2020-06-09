@@ -11,13 +11,14 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Interpolator;
+import android.widget.FrameLayout;
 
 /**
  * @author ooftf
  * @date 2018/8/23 0023
  * @desc
  **/
-public class SlidingLayout extends ViewGroup {
+public class SlidingLayout extends FrameLayout {
     float openHeight = 0;
     float closeHeight = 0;
     float currentHeight = 0;
