@@ -8,7 +8,7 @@
 ## Gradle配置
 ```groovy
 dependencies {
-    implementation 'com.ooftf:sliding-layout:1.1.2'
+    implementation 'com.ooftf:sliding-layout:1.1.5'
 }
 ```
 ## xml
