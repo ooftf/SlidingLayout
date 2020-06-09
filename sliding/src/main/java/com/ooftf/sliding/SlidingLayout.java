@@ -9,15 +9,15 @@ import android.os.Build;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Interpolator;
-import android.widget.FrameLayout;
 
 /**
  * @author ooftf
  * @date 2018/8/23 0023
  * @desc
  **/
-public class SlidingLayout extends FrameLayout {
+public class SlidingLayout extends ViewGroup {
     float openHeight = 0;
     float closeHeight = 0;
     float currentHeight = 0;
@@ -81,13 +81,16 @@ public class SlidingLayout extends FrameLayout {
             }
         });
 
-       // post(OnMe)
+        // post(OnMe)
     }
+
+    int mWidthMeasureSpec = 0;
+    int unspecifiedHeight = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        mWidthMeasureSpec = widthMeasureSpec;
         // 以无限高度默认测量子view的高度
-        int boundless = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         int realHeight = 0;
         if (!isShelterMode) {
             realHeight = MeasureSpec.makeMeasureSpec((int) currentHeight, MeasureSpec.EXACTLY);
@@ -95,10 +98,11 @@ public class SlidingLayout extends FrameLayout {
         openHeight = 0;
         for (int i = 0; i < getChildCount(); i++) {
             View child = getChildAt(i);
-            measureChildWithMargins(child, widthMeasureSpec, 0, boundless, 0);
+
+            measureChildCompat(child, widthMeasureSpec, unspecifiedHeight);
             openHeight = Math.max(child.getMeasuredHeight(), openHeight);
             if (!isShelterMode) {
-                measureChildWithMargins(child, widthMeasureSpec, 0, realHeight, 0);
+                measureChildCompat(child, widthMeasureSpec, realHeight);
             }
         }
         // 如果打开状态高度小于关闭状态高度，那么将改关闭和打开设置为同一高度
@@ -114,24 +118,42 @@ public class SlidingLayout extends FrameLayout {
         Log.e("currentHeight", "" + currentHeight);
         // 设置高度
         setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), (int) currentHeight);
+        //super.onMeasure(widthMeasureSpec,MeasureSpec.makeMeasureSpec((int) currentHeight, MeasureSpec.EXACTLY));
     }
 
-   /* @Override
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        Log.e("onLayout", left + "," + top + "," + right + "," + getOpenHeight());
-        super.onLayout(changed, left, top, right, bottom);
-    }*/
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        for (int i = 0; i < getChildCount(); i++) {
+            View child = getChildAt(i);
+            child.layout(getPaddingLeft(), getPaddingTop(), getPaddingLeft() + child.getMeasuredWidth(), getPaddingTop() + child.getMeasuredHeight());
+        }
+    }
+
+    /**
+     * 如果内容小于关闭高度，那么大小会设置为内容高度，打开关闭不会有变化
+     *
+     * @return
+     */
+    public boolean isWillChange() {
+        return getOpenHeight() > closeHeight;
+    }
 
     float getOpenHeight() {
         openHeight = 0;
-        int height = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
-        int width = MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY);
         for (int i = 0; i < getChildCount(); i++) {
             View child = getChildAt(i);
-            measureChildWithMargins(child, width, 0, height, 0);
+            measureChildCompat(child, mWidthMeasureSpec, unspecifiedHeight);
             openHeight = Math.max(child.getMeasuredHeight(), openHeight);
         }
         return openHeight;
+    }
+
+    void measureChildCompat(View child, int widthMeasureSpec, int heightMeasureSpec) {
+        if (child.getLayoutParams() instanceof MarginLayoutParams) {
+            measureChildWithMargins(child, widthMeasureSpec, 0, heightMeasureSpec, 0);
+        } else {
+            measureChild(child, widthMeasureSpec, heightMeasureSpec);
+        }
     }
 
     public void setAnimatorChangeListener(Animator.AnimatorListener listener) {
